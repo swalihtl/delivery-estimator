@@ -58,7 +58,7 @@
 
 <body>
 
-<div class="delivery-box" id="box">
+<div class="delivery-box">
   <h4>Check your delivery date</h4>
 
   <div class="row">
@@ -73,14 +73,40 @@
   <div id="result" class="info"></div>
 </div>
 
+<!-- Supabase SDK -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
 <script>
+/* ---------------- SUPABASE SETUP ---------------- */
+
+const supabaseUrl = "https://sxpuyklcezlggjmcmkdo.supabase.co";
+const supabaseKey = "sb_publishable_jqelsrwrLOMZiVCSG5QKBQ_AypIDZFQ";
+const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
+
+async function logPincode(pincode) {
+  try {
+    await supabaseClient.from("pincode_logs").insert([
+      {
+        pincode: pincode,
+        source: "product page"
+      }
+    ]);
+  } catch (err) {
+    console.error("Supabase log error", err);
+  }
+}
+
+/* ---------------- IFRAME AUTO RESIZE ---------------- */
+
 function sendHeight() {
   const height = document.body.scrollHeight;
   parent.postMessage({ iframeHeight: height }, "*");
 }
 
+/* ---------------- DELIVERY LOGIC ---------------- */
+
 function checkDelivery() {
-  const pin = document.getElementById("pincode").value;
+  const pin = document.getElementById("pincode").value.trim();
 
   if (!/^\d{6}$/.test(pin)) {
     document.getElementById("result").innerHTML =
@@ -89,30 +115,43 @@ function checkDelivery() {
     return;
   }
 
+  // 🔹 LOG PINCODE TO SUPABASE
+  logPincode(pin);
+
   const p = Number(pin);
 
+  // Current IST time
   const now = new Date();
   const ist = new Date(
     now.toLocaleString("en-US", { timeZone: "Asia/Kolkata" })
   );
 
+  // Dispatch logic
   const hour = ist.getHours();
   const dispatchDate = new Date(ist);
   if (hour >= 18) dispatchDate.setDate(dispatchDate.getDate() + 1);
 
-  let minDays = 5, maxDays = 7;
+  let minDays = 5;
+  let maxDays = 7;
 
+  // Bengaluru
   if (p >= 560001 && p <= 560100) {
     minDays = maxDays = 3;
-  } else if (p >= 670000 && p <= 695999) {
-    minDays = 2; maxDays = 3;
-  } else if (
+  }
+  // Kerala
+  else if (p >= 670000 && p <= 695999) {
+    minDays = 2;
+    maxDays = 3;
+  }
+  // TN, KA, AP, TG, MH
+  else if (
     (p >= 600000 && p <= 643999) ||
     (p >= 560000 && p <= 591999) ||
     (p >= 500000 && p <= 535999) ||
     (p >= 400000 && p <= 444999)
   ) {
-    minDays = 3; maxDays = 4;
+    minDays = 3;
+    maxDays = 4;
   }
 
   const start = new Date(dispatchDate);
