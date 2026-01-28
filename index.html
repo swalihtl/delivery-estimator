@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Delivery Estimator</title>
+
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+  }
+  .delivery-box {
+    border: 1px solid #e5e5e5;
+    padding: 16px;
+    max-width: 420px;
+  }
+  h4 {
+    font-size: 13px;
+    letter-spacing: 1px;
+    margin-bottom: 8px;
+  }
+  .row {
+    display: flex;
+    gap: 8px;
+  }
+  input {
+    flex: 1;
+    padding: 10px;
+    border: 1px solid #ccc;
+  }
+  button {
+    padding: 0 16px;
+    background: black;
+    color: white;
+    border: none;
+    cursor: pointer;
+  }
+  .info {
+    margin-top: 10px;
+    font-size: 14px;
+  }
+  .green {
+    color: green;
+  }
+</style>
+</head>
+
+<body>
+
+<div class="delivery-box">
+  <h4>DELIVERY DETAILS</h4>
+
+  <div class="row">
+    <input
+      id="pincode"
+      placeholder="Enter pincode to delivery date"
+      maxlength="6"
+    />
+    <button onclick="checkDelivery()">CHECK</button>
+  </div>
+
+  <div id="result" class="info"></div>
+</div>
+
+<script>
+function checkDelivery() {
+  const pin = document.getElementById("pincode").value;
+
+  if (!/^\d{6}$/.test(pin)) {
+    document.getElementById("result").innerHTML =
+      "Please enter a valid 6-digit pincode.";
+    return;
+  }
+
+  const p = Number(pin);
+
+  const now = new Date();
+  const ist = new Date(
+    now.toLocaleString("en-US", { timeZone: "Asia/Kolkata" })
+  );
+
+  const hour = ist.getHours();
+  const dispatchDate = new Date(ist);
+  if (hour >= 18) dispatchDate.setDate(dispatchDate.getDate() + 1);
+
+  let min = 5, max = 7, region = "Rest of India";
+
+  if (p >= 560001 && p <= 560100) {
+    min = max = 3;
+    region = "Bengaluru";
+  } else if (p >= 670000 && p <= 695999) {
+    min = 2; max = 3;
+    region = "Kerala";
+  } else if (
+    (p >= 600000 && p <= 643999) ||
+    (p >= 560000 && p <= 591999) ||
+    (p >= 500000 && p <= 535999) ||
+    (p >= 400000 && p <= 444999)
+  ) {
+    min = 3; max = 4;
+    region = "Selected States";
+  }
+
+  document.getElementById("result").innerHTML = `
+    <p>🚚 Delivery in <strong>${min}${min !== max ? "–" + max : ""} days</strong> (${region})</p>
+    <p>📦 Dispatch: ${dispatchDate.toDateString()}</p>
+    <p class="green">Free shipping all over India</p>
+  `;
+}
+</script>
+
+</body>
+</html>
